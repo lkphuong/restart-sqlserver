@@ -22,6 +22,12 @@ func ConnectionSqlServer() *sql.DB {
 	databasePassword := os.Getenv("DATABASE_PASSWORD")
 	databaseName := os.Getenv("DATABASE_NAME")
 
+	log.Println("Database host: ", databaseHost)
+	log.Println("Database port: ", databasePort)
+	log.Println("Database user: ", databaseUser)
+	log.Println("Database password: ", databasePassword)
+	log.Println("Database name: ", databaseName)
+
 	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s;encrypt=disable;",
 		databaseHost, databaseUser, databasePassword, databasePort, databaseName)
 
@@ -32,7 +38,9 @@ func ConnectionSqlServer() *sql.DB {
 
 	err = db.Ping()
 	if err != nil {
-
+		log.Fatal("Ping failed:", err.Error())
+		defer db.Close()
+		return nil
 	}
 
 	fmt.Println("Connected!")
