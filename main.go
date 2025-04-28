@@ -9,20 +9,19 @@ import (
 )
 
 func main() {
-
+	db := sqlserver.ConnectionSqlServer()
 	job := cron.New()
-	job.AddFunc("0 10 * * *", func() {
-		db := sqlserver.ConnectionSqlServer()
-
+	job.AddFunc("0 * * * *", func() {
 		err := db.Ping()
 		log.Default().Println("Ping database success! ", err)
 
-		cmd := exec.Command("cmd", "/C", "restart-sqlservice.bat")
-		output, err := cmd.CombinedOutput()
 		if err != nil {
+			log.Default().Println("Restarting SQL Server...")
+			cmd := exec.Command("cmd", "/C", "restart-sqlserver.bat")
+			_, err := cmd.CombinedOutput()
 			log.Default().Println("Error executing command: ", err)
+			log.Default().Println("Done!!!")
 		}
-		log.Default().Println("Command output: ", string(output))
 
 	})
 	job.Start()
