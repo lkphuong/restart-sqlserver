@@ -1,27 +1,19 @@
 # Restart SQL Server
 
-This project is a Go application that periodically pings a SQL Server database# Restart SQL Server
-
-This project is a Go application designed to periodically monitor and restart a SQL Server instance if connectivity issues are detected. It uses the `cron` library for scheduling tasks and connects to the database using the `github.com/microsoft/go-mssqldb` driver.
+This project is a Go application designed to monitor and restart a SQL Server instance if it becomes unresponsive. It uses the `cron` library to schedule periodic health checks and executes Windows commands to manage SQL Server services.
 
 ## Features
 
-- **Database Connectivity**: Connects to a SQL Server database using credentials from a `.env` file.
-- **Health Check**: Pings the database every day at 10:00 AM to ensure connectivity.
-- **Automatic Restart**: Restarts the SQL Server and SQL Server Agent services if the database is unreachable.
+- **Health Monitoring**: Periodically checks if the SQL Server service is running.
+- **Automatic Restart**: Restarts the SQL Server (`MSSQLSERVER`) and SQL Server Agent (`SQLSERVERAGENT`) services if they are not running.
+- **Scheduling**: Uses a cron job to perform health checks daily at 10:00 AM.
+- **Logging**: Provides detailed logs for service status, restart attempts, and errors.
 
 ## Prerequisites
 
 - **Go**: Version 1.23 or later.
+- **Windows**: The application uses Windows commands to manage services.
 - **SQL Server**: A running SQL Server instance.
-- **Environment Variables**: A `.env` file with the following variables:
-  ```env
-  DATABASE_HOST=your-database-host
-  DATABASE_PORT=your-database-port
-  DATABASE_NAME=your-database-name
-  DATABASE_USERNAME=your-database-username
-  DATABASE_PASSWORD=your-database-password
-  ```
 
 ## Installation
 
@@ -36,48 +28,56 @@ This project is a Go application designed to periodically monitor and restart a 
    go mod tidy
    ```
 
-3. Create a `.env` file in the root directory and configure your database credentials.
+3. (Optional) Create a `.env` file in the root directory if database credentials are required in the future.
 
 ## Usage
 
 1. Build the application:
    ```sh
-   go build -o restart-sqlserver.exe main.go
+   go build -o service.exe main.go
    ```
 
 2. Run the application:
    ```sh
-   ./restart-sqlserver.exe
+   ./service.exe
    ```
 
-The application will run continuously, checking the database connection and restarting services if necessary.
+The application will run continuously, checking the SQL Server service status and restarting it if necessary.
+
+## How It Works
+
+1. The application uses the `sc query` command to check the status of the `MSSQLSERVER` service.
+2. If the service is not running, it executes the following commands to restart it:
+   - Stops the `SQLSERVERAGENT` service.
+   - Stops the `MSSQLSERVER` service.
+   - Starts the `MSSQLSERVER` service.
+   - Starts the `SQLSERVERAGENT` service.
+3. A cron job schedules the health check to run daily at 10:00 AM.
+4. Logs are generated for each action, including errors and successful restarts.
 
 ## Project Structure
 
 ```
-.env                  # Environment variables for database configuration
 .gitignore            # Ignored files and directories
 go.mod                # Go module dependencies
 go.sum                # Go module checksums
 main.go               # Main application logic
-configs/
-  hard_code.go        # Placeholder for additional configurations
-  databases/
-    database.go       # Database connection logic
+README.md             # Project documentation
+service.exe           # Compiled executable (ignored by Git)
 ```
-
-## How It Works
-
-1. The application loads database credentials from the `.env` file.
-2. It establishes a connection to the SQL Server using the `github.com/microsoft/go-mssqldb` driver.
-3. A cron job is scheduled to ping the database every day at 10:00 AM.
-4. If the database is unreachable, the application executes Windows commands to restart the SQL Server and SQL Server Agent services.
 
 ## Dependencies
 
-- [github.com/microsoft/go-mssqldb](https://github.com/microsoft/go-mssqldb): SQL Server driver for Go.
 - [github.com/robfig/cron](https://github.com/robfig/cron): Library for scheduling tasks.
-- [github.com/joho/godotenv](https://github.com/joho/godotenv): Loads environment variables from a `.env` file.
+
+## Logging
+
+The application logs important events, including:
+- Service status checks.
+- Restart attempts and their outcomes.
+- Errors encountered during execution.
+
+Logs are printed to the console and can be redirected to a file if needed.
 
 ## License
 
@@ -85,21 +85,4 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## Author
 
-Developed by [lkphuong](https://github.com/lkphuong). every 1 hours. It uses the `cron` library for scheduling tasks and connects to the database using the `github.com/microsoft/go-mssqldb` driver.
-
-## Features
-
-- Connects to a SQL Server database using credentials from a `.env` file.
-- Pings the database to ensure connectivity.
-
-## Prerequisites
-
-- Go 1.23 or later
-- A SQL Server instance
-- A `.env` file with the following variables:
-  ```env
-  DATABASE_HOST=your-database-host
-  DATABASE_PORT=your-database-port
-  DATABASE_NAME=your-database-name
-  DATABASE_USERNAME=your-database-username
-  DATABASE_PASSWORD=your-database-password
+Developed by [lkphuong](https://github.com/lkphuong).
